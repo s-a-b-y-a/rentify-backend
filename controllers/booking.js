@@ -17,8 +17,8 @@ exports.bookCar = async (req, res) => {
     }
 
     const timeDifference = end.getTime() - start.getTime();
-    const totalHours = timeDifference / (1000 * 60 * 60); 
-    const fullDays = Math.floor(totalHours / 24); 
+    const totalHours = timeDifference / (1000 * 60 * 60);
+    const fullDays = Math.floor(totalHours / 24);
     const remainingHours = totalHours % 24; // remaining hours
 
     let totalPrice;
@@ -30,20 +30,20 @@ exports.bookCar = async (req, res) => {
       totalPrice = (fullDays + 1) * car.rentPerDay;
     }
 
-    totalPrice = Math.ceil(totalPrice); 
+    totalPrice = Math.ceil(totalPrice);
 
-    car.availability = false
+    car.availability = false;
 
     const booking = new Booking({
       user: req.user._id,
       car: carID,
-      startDate: start, 
+      startDate: start,
       endDate: end,
       totalPrice,
     });
 
     await booking.save();
-    await car.save()
+    await car.save();
 
     return res.status(200).json({
       message: "Car booked successfully!",
@@ -58,7 +58,10 @@ exports.bookCar = async (req, res) => {
 // Get all bookings of a logged-in user
 exports.getUserBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ user: req.user._id, status: { $in: ['confirmed','completed'] } }).populate({
+    const bookings = await Booking.find({
+      user: req.user._id,
+      status: { $in: ["confirmed", "completed"] },
+    }).populate({
       path: "car",
       select: "name brand image location",
     });
@@ -85,8 +88,11 @@ exports.cancelBooking = async (req, res) => {
       return res.status(400).json({ message: "Booking is already cancelled!" });
     }
 
+    const car = await Car.findById(booking.car);
+    car.availability = true;
     booking.status = "cancelled";
     await booking.save();
+    await car.save();
 
     return res.status(200).json({ message: "Booking cancelled successfully!" });
   } catch (error) {
